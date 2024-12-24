@@ -1,0 +1,212 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const OvertimeCalculator = () => {
+  const [formData, setFormData] = useState({
+    salary: '',
+    weekdayNormalHours: '',
+    weekdayNightHours: '',
+    holidayNormalHours: '',
+    holidayNightHours: '',
+    breakHours: ''
+  });
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [hourlyRates, setHourlyRates] = useState({
+    base: 0,
+    weekdayNormal: 0,
+    weekdayNight: 0,
+    holidayNormal: 0,
+    holidayNight: 0
+  });
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    
+    // 入力値をそのまま受け入れる
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+    setError('');
+    
+    if (id === 'salary' && value) {
+      const salary = parseFloat(value);
+      if (!isNaN(salary)) {
+        const baseRate = (salary * 1.12 + 184700) / 162;
+        setHourlyRates({
+          base: baseRate,
+          weekdayNormal: baseRate * 1.25,
+          weekdayNight: baseRate * 1.5,
+          holidayNormal: baseRate * 1.35,
+          holidayNight: baseRate * 1.6
+        });
+      }
+    }
+  };
+
+  const calculateOvertimePay = () => {
+    const values = Object.values(formData);
+    if (values.some(val => val === '')) {
+      setError('全ての入力欄を入力してください。');
+      return;
+    }
+
+    const salary = parseFloat(formData.salary);
+    const weekdayNormalHours = parseFloat(formData.weekdayNormalHours);
+    const weekdayNightHours = parseFloat(formData.weekdayNightHours);
+    const holidayNormalHours = parseFloat(formData.holidayNormalHours);
+    const holidayNightHours = parseFloat(formData.holidayNightHours);
+    const breakHours = parseFloat(formData.breakHours);
+
+    if ([salary, weekdayNormalHours, weekdayNightHours, holidayNormalHours, holidayNightHours, breakHours].some(isNaN)) {
+      setError('正しい数値を入力してください。');
+      return;
+    }
+
+    const baseHourlyRate = (salary * 1.12 + 184700) / 162;
+    const weekdayNormalRate = baseHourlyRate * 1.25;
+    const weekdayNightRate = baseHourlyRate * 1.5;
+    const holidayNormalRate = baseHourlyRate * 1.35;
+    const holidayNightRate = baseHourlyRate * 1.6;
+
+    const breakdown = {
+      weekdayNormal: weekdayNormalRate * weekdayNormalHours,
+      weekdayNight: weekdayNightRate * weekdayNightHours,
+      holidayNormal: holidayNormalRate * holidayNormalHours,
+      holidayNight: holidayNightRate * holidayNightHours,
+      break: baseHourlyRate * breakHours,
+      total: (weekdayNormalRate * weekdayNormalHours) +
+             (weekdayNightRate * weekdayNightHours) +
+             (holidayNormalRate * holidayNormalHours) +
+             (holidayNightRate * holidayNightHours) +
+             (baseHourlyRate * breakHours)
+    };
+
+    setResult(breakdown);
+  };
+
+  const InputField = ({ id, label, helpText, rate }) => (
+    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:border-blue-200 transition-colors duration-200">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+        {helpText && <span className="text-gray-500 text-sm ml-2">{helpText}</span>}
+        {rate > 0 && (
+          <span className="text-blue-600 text-sm ml-2 font-mono">
+            時給: ¥{Math.round(rate).toLocaleString()}
+          </span>
+        )}
+      </label>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        id={id}
+        value={formData[id]}
+        onChange={handleInputChange}
+        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        min="0"
+        step="0.5"
+      />
+    </div>
+  );
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto bg-gradient-to-b from-white to-gray-50">
+      <CardHeader className="border-b bg-white">
+        <CardTitle className="text-2xl font-bold text-center text-gray-800">残業代計算機</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          <InputField
+            id="salary"
+            label="月俸給（円）"
+            helpText="俸給を入力してください"
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              id="weekdayNormalHours"
+              label="平日普通の労働時間（時間）"
+              rate={hourlyRates.weekdayNormal}
+            />
+            
+            <InputField
+              id="weekdayNightHours"
+              label="平日深夜の労働時間（時間）"
+              rate={hourlyRates.weekdayNight}
+            />
+            
+            <InputField
+              id="holidayNormalHours"
+              label="休日普通の労働時間（時間）"
+              rate={hourlyRates.holidayNormal}
+            />
+            
+            <InputField
+              id="holidayNightHours"
+              label="休日深夜の労働時間（時間）"
+              rate={hourlyRates.holidayNight}
+            />
+            
+            <InputField
+              id="breakHours"
+              label="休憩時間（時間）"
+              rate={hourlyRates.base}
+            />
+          </div>
+
+          <button
+            onClick={calculateOvertimePay}
+            className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium mt-6 shadow-lg hover:shadow-xl"
+          >
+            計算する
+          </button>
+
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {result && (
+            <div className="mt-6 p-6 bg-white rounded-lg shadow-lg border border-gray-100">
+              <h3 className="font-bold text-lg mb-4 text-gray-800">計算結果</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span>平日普通残業:</span>
+                  <span className="font-mono">¥{result.weekdayNormal.toLocaleString('ja-JP', { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span>平日深夜残業:</span>
+                  <span className="font-mono">¥{result.weekdayNight.toLocaleString('ja-JP', { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span>休日普通残業:</span>
+                  <span className="font-mono">¥{result.holidayNormal.toLocaleString('ja-JP', { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span>休日深夜残業:</span>
+                  <span className="font-mono">¥{result.holidayNight.toLocaleString('ja-JP', { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span>休憩時間:</span>
+                  <span className="font-mono">¥{result.break.toLocaleString('ja-JP', { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 mt-2 bg-blue-50 rounded-lg px-4">
+                  <span className="font-bold text-lg">総支給額:</span>
+                  <span className="font-mono font-bold text-lg text-blue-600">
+                    ¥{result.total.toLocaleString('ja-JP', { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default OvertimeCalculator;
