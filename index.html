@@ -34,6 +34,11 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+        .rate-display {
+            color: blue;
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
         button {
             width: 100%;
             padding: 10px;
@@ -68,19 +73,29 @@
             <label for="salary">月俸給（円）:</label>
             <input type="number" id="salary" placeholder="例: 300000" required>
 
-            <label for="weekdayNormalHours">平日普通の労働時間（時間）:</label>
+            <label for="weekdayNormalHours">平日普通の労働時間（時間）:
+                <span class="rate-display" id="weekdayNormalRate"></span>
+            </label>
             <input type="number" id="weekdayNormalHours" placeholder="例: 5" required>
 
-            <label for="weekdayNightHours">平日深夜の労働時間（時間）:</label>
+            <label for="weekdayNightHours">平日深夜の労働時間（時間）:
+                <span class="rate-display" id="weekdayNightRate"></span>
+            </label>
             <input type="number" id="weekdayNightHours" placeholder="例: 3" required>
 
-            <label for="holidayNormalHours">休日普通の労働時間（時間）:</label>
+            <label for="holidayNormalHours">休日普通の労働時間（時間）:
+                <span class="rate-display" id="holidayNormalRate"></span>
+            </label>
             <input type="number" id="holidayNormalHours" placeholder="例: 2" required>
 
-            <label for="holidayNightHours">休日深夜の労働時間（時間）:</label>
+            <label for="holidayNightHours">休日深夜の労働時間（時間）:
+                <span class="rate-display" id="holidayNightRate"></span>
+            </label>
             <input type="number" id="holidayNightHours" placeholder="例: 1" required>
 
-            <label for="breakHours">休憩時間（時間）:</label>
+            <label for="breakHours">休憩時間（時間）:
+                <span class="rate-display" id="breakRate"></span>
+            </label>
             <input type="number" id="breakHours" placeholder="例: 1" required>
 
             <button type="button" onclick="calculateOvertimePay()">計算する</button>
@@ -109,26 +124,32 @@
                 return;
             }
 
-            const baseHourlyRate = (salary * 1.12 + 184700) / 162;
-            const weekdayNormalRate = baseHourlyRate * 1.25;
-            const weekdayNightRate = baseHourlyRate * 1.5;
-            const holidayNormalRate = baseHourlyRate * 1.35;
-            const holidayNightRate = baseHourlyRate * 1.6;
+            const baseHourlyRate = Math.floor((salary * 1.12 + 184700) / 162);
+            const weekdayNormalRate = Math.floor(baseHourlyRate * 1.25);
+            const weekdayNightRate = Math.floor(baseHourlyRate * 1.5);
+            const holidayNormalRate = Math.floor(baseHourlyRate * 1.35);
+            const holidayNightRate = Math.floor(baseHourlyRate * 1.6);
+
+            document.getElementById('weekdayNormalRate').textContent = `¥${weekdayNormalRate}`;
+            document.getElementById('weekdayNightRate').textContent = `¥${weekdayNightRate}`;
+            document.getElementById('holidayNormalRate').textContent = `¥${holidayNormalRate}`;
+            document.getElementById('holidayNightRate').textContent = `¥${holidayNightRate}`;
+            document.getElementById('breakRate').textContent = `¥${baseHourlyRate}`;
 
             const weekdayNormalPay = weekdayNormalRate * weekdayNormalHours;
             const weekdayNightPay = weekdayNightRate * weekdayNightHours;
             const holidayNormalPay = holidayNormalRate * holidayNormalHours;
             const holidayNightPay = holidayNightRate * holidayNightHours;
-            const breakDeduction = baseHourlyRate * breakHours;
+            const breakPay = baseHourlyRate * breakHours;
 
-            const totalPay = weekdayNormalPay + weekdayNightPay + holidayNormalPay + holidayNightPay - breakDeduction;
+            const totalPay = weekdayNormalPay + weekdayNightPay + holidayNormalPay + holidayNightPay + breakPay;
 
             resultDiv.innerHTML = `
                 <p>平日普通残業: ¥${weekdayNormalPay.toLocaleString()}</p>
                 <p>平日深夜残業: ¥${weekdayNightPay.toLocaleString()}</p>
                 <p>休日普通残業: ¥${holidayNormalPay.toLocaleString()}</p>
                 <p>休日深夜残業: ¥${holidayNightPay.toLocaleString()}</p>
-                <p>休憩時間控除: -¥${breakDeduction.toLocaleString()}</p>
+                <p>休憩時間給料: ¥${breakPay.toLocaleString()}</p>
                 <p><strong>総支給額: ¥${totalPay.toLocaleString()}</strong></p>
             `;
         }
