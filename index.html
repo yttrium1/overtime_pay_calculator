@@ -177,7 +177,7 @@
         function updatePositionAllowanceResult() {
             const positionAllowance = parseInt(document.getElementById('position-allowance').value);
             const resultElement = document.getElementById('position-allowance-result');
-            resultElement.textContent = `f × 0.12 = ¥${(positionAllowance * 0.12).toLocaleString()}`;
+            resultElement.textContent = `f × 0.12 = ¥${(positionAllowance * 0.12).toFixed(2).toLocaleString()}`;
         }
 
         function calculateSalary() {
