@@ -108,11 +108,12 @@
             </div>
 
             <label for="position-allowance">職務手当 (f)</label>
-            <select id="position-allowance" name="position-allowance">
+            <select id="position-allowance" name="position-allowance" onchange="updatePositionAllowanceResult()">
                 <option value="80000">副部長</option>
                 <option value="95000">部長</option>
                 <option value="0">なし</option>
             </select>
+            <span id="position-allowance-result" class="result"></span>
 
             <button type="button" onclick="calculateSalary()">計算する</button>
         </form>
@@ -173,6 +174,12 @@
             resultElement.textContent = `e × 21000 = ¥${(nightDuty * 21000).toLocaleString()}`;
         }
 
+        function updatePositionAllowanceResult() {
+            const positionAllowance = parseInt(document.getElementById('position-allowance').value);
+            const resultElement = document.getElementById('position-allowance-result');
+            resultElement.textContent = `f × 0.12 = ¥${(positionAllowance * 0.12).toLocaleString()}`;
+        }
+
         function calculateSalary() {
             const years = parseInt(document.getElementById('years').value);
             const dependents = parseFloat(document.getElementById('dependents').value);
@@ -180,14 +187,21 @@
             const overtime = parseFloat(document.getElementById('overtime').value);
             const nightDuty = parseFloat(document.getElementById('night-duty').value);
             const positionAllowance = parseFloat(document.getElementById('position-allowance').value);
-            const salary = getSalaryFromYears(years);
 
-            const base = Math.ceil((salary + dependents * 6500 + positionAllowance) * 1.12);
-            const overtimePay = Math.ceil(1.25 * overtime * (salary * 1.12 + 184700) / 162);
-            const total = Math.ceil(base + housing + 184700 + overtimePay + (nightDuty * 21000));
+            const salaries = [];
+            const labels = [];
+
+            for (let i = 0; i <= 10; i++) {
+                const salary = getSalaryFromYears(years + i);
+                const base = Math.ceil((salary + dependents * 6500) * 1.12 + positionAllowance * 0.12);
+                const overtimePay = Math.ceil(1.25 * overtime * (base + 184700) / 162);
+                const total = Math.ceil(base + housing + 184700 + overtimePay + (nightDuty * 21000));
+                salaries.push(total);
+                labels.push(`${years + i}年目`);
+            }
 
             const outputDiv = document.getElementById('output');
-            outputDiv.textContent = `予想月給: ¥${total.toLocaleString()}`;
+            outputDiv.textContent = `予想月給: ¥${salaries[0].toLocaleString()}`;
             outputDiv.style.display = 'block';
 
             const ctx = document.getElementById('salaryChart').getContext('2d');
@@ -195,15 +209,10 @@
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: Array.from({ length: 11 }, (_, i) => `${years + i}年目`),
+                    labels: labels,
                     datasets: [{
                         label: '予想月給',
-                        data: Array.from({ length: 11 }, (_, i) => {
-                            const salaryFuture = getSalaryFromYears(years + i);
-                            const baseFuture = Math.ceil((salaryFuture + dependents * 6500 + positionAllowance) * 1.12);
-                            const overtimeFuture = Math.ceil(1.25 * overtime * (salaryFuture * 1.12 + 184700) / 162);
-                            return Math.ceil(baseFuture + housing + 184700 + overtimeFuture + (nightDuty * 21000));
-                        }),
+                        data: salaries,
                         borderColor: 'rgba(75, 192, 192, 1)',
                         backgroundColor: 'rgba(75, 192, 192, 0.2)',
                         borderWidth: 2
