@@ -3,155 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>残業代計算機</title>
+    <title>給与計算サイト</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f9f9f9;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
         }
         .container {
             max-width: 800px;
-            margin: 0 auto;
-            background: white;
+            margin: 50px auto;
             padding: 20px;
+            background: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         h1 {
             text-align: center;
             color: #333;
         }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
         label {
-            display: block;
-            margin-bottom: 5px;
             font-weight: bold;
         }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 15px;
+        input, select, button {
+            padding: 10px;
+            font-size: 1rem;
             border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .rate-display {
-            color: blue;
-            font-size: 0.9em;
-            margin-left: 5px;
+            border-radius: 5px;
         }
         button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007BFF;
+            background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 4px;
             cursor: pointer;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #45a049;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            background: #e7f4e4;
+            border: 1px solid #b2d8b2;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            color: #2f6a2f;
         }
         .result {
-            margin-top: 20px;
-            font-weight: bold;
-            padding: 15px;
-            background: #e7f3ff;
-            border: 1px solid #b3d7ff;
-            border-radius: 4px;
+            font-size: 1rem;
+            color: blue;
+            margin-left: 10px;
         }
-        .error {
+        .note {
+            font-size: 0.9rem;
             color: red;
-            margin-bottom: 10px;
+            margin-top: -10px;
+        }
+        canvas {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>残業代計算機</h1>
-        <form id="overtimeForm">
-            <div class="error" id="error"></div>
-            <label for="salary">月俸給（円）:</label>
-            <input type="number" id="salary" placeholder="例: 300000" required>
+        <h1>給与計算</h1>
+        <form id="salary-form">
+            <label for="years">年目 (x)</label>
+            <div style="display: flex; align-items: center;">
+                <input type="number" id="years" name="years" required placeholder="例: 5" oninput="updateSalaryResult()">
+                <span id="salary-result" class="result"></span>
+            </div>
 
-            <label for="weekdayNormalHours">平日普通の労働時間（時間）:
-                <span class="rate-display" id="weekdayNormalRate"></span>
-            </label>
-            <input type="number" id="weekdayNormalHours" placeholder="例: 5" required>
+            <label for="dependents">扶養手当対象者の人数 (b)</label>
+            <div style="display: flex; align-items: center;">
+                <input type="number" id="dependents" name="dependents" required placeholder="例: 2" oninput="updateDependentResult()">
+                <span id="dependent-result" class="result"></span>
+            </div>
 
-            <label for="weekdayNightHours">平日深夜の労働時間（時間）:
-                <span class="rate-display" id="weekdayNightRate"></span>
-            </label>
-            <input type="number" id="weekdayNightHours" placeholder="例: 3" required>
+            <label for="housing">住居手当 (c)</label>
+            <div style="display: flex; align-items: center;">
+                <select id="housing" name="housing" onchange="updateHousingResult()">
+                    <option value="28000">あり</option>
+                    <option value="0">なし</option>
+                </select>
+                <span id="housing-result" class="result"></span>
+            </div>
 
-            <label for="holidayNormalHours">休日普通の労働時間（時間）:
-                <span class="rate-display" id="holidayNormalRate"></span>
-            </label>
-            <input type="number" id="holidayNormalHours" placeholder="例: 2" required>
+            <label for="overtime">残業平均時間 (d)</label>
+            <div style="display: flex; align-items: center;">
+                <input type="number" id="overtime" name="overtime" required placeholder="例: 10" oninput="updateOvertimeResult()">
+                <span id="overtime-result" class="result"></span>
+            </div>
+            <div class="note">平日22:00までに残業したものと計算しています。</div>
 
-            <label for="holidayNightHours">休日深夜の労働時間（時間）:
-                <span class="rate-display" id="holidayNightRate"></span>
-            </label>
-            <input type="number" id="holidayNightHours" placeholder="例: 1" required>
+            <label for="night-duty">日当直回数 (e)</label>
+            <div style="display: flex; align-items: center;">
+                <input type="number" id="night-duty" name="night-duty" required placeholder="例: 3" oninput="updateNightDutyResult()">
+                <span id="night-duty-result" class="result"></span>
+            </div>
 
-            <label for="breakHours">休憩時間（時間）:
-                <span class="rate-display" id="breakRate"></span>
-            </label>
-            <input type="number" id="breakHours" placeholder="例: 1" required>
+            <label for="position-allowance">職務手当 (f)</label>
+            <select id="position-allowance" name="position-allowance">
+                <option value="80000">副部長</option>
+                <option value="95000">部長</option>
+                <option value="0">なし</option>
+            </select>
 
-            <button type="button" onclick="calculateOvertimePay()">計算する</button>
+            <button type="button" onclick="calculateSalary()">計算する</button>
         </form>
-
-        <div class="result" id="result"></div>
+        <div id="output" class="output" style="display: none;"></div>
+        <canvas id="salaryChart" width="800" height="400" style="display: none;"></canvas>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        function calculateOvertimePay() {
-            const salary = parseFloat(document.getElementById('salary').value);
-            const weekdayNormalHours = parseFloat(document.getElementById('weekdayNormalHours').value);
-            const weekdayNightHours = parseFloat(document.getElementById('weekdayNightHours').value);
-            const holidayNormalHours = parseFloat(document.getElementById('holidayNormalHours').value);
-            const holidayNightHours = parseFloat(document.getElementById('holidayNightHours').value);
-            const breakHours = parseFloat(document.getElementById('breakHours').value);
+        function getSalaryFromYears(years) {
+            const salaryTable = {
+                3: 292500, 4: 301200, 5: 312500, 6: 324300, 7: 336100,
+                8: 349700, 9: 361800, 10: 374200, 11: 387200, 12: 400000,
+                13: 412500, 14: 424100, 15: 435300, 16: 446500, 17: 457700,
+                18: 467700, 19: 477500, 20: 487000, 21: 496500, 22: 506000,
+                23: 515500, 24: 525000, 25: 534500, 26: 552900, 27: 560000,
+                28: 565300, 29: 571500
+            };
+            return salaryTable[years] || 0;
+        }
 
-            const errorDiv = document.getElementById('error');
-            const resultDiv = document.getElementById('result');
-
-            errorDiv.textContent = '';
-            resultDiv.textContent = '';
-
-            if ([salary, weekdayNormalHours, weekdayNightHours, holidayNormalHours, holidayNightHours, breakHours].some(isNaN)) {
-                errorDiv.textContent = '全ての入力欄を正しく入力してください。';
-                return;
+        function updateSalaryResult() {
+            const years = parseInt(document.getElementById('years').value);
+            const salary = getSalaryFromYears(years);
+            const resultElement = document.getElementById('salary-result');
+            if (salary > 0) {
+                resultElement.textContent = `俸給: ¥${Math.ceil(salary).toLocaleString()}`;
+            } else {
+                resultElement.textContent = "";
             }
+        }
 
-            const baseHourlyRate = Math.floor((salary * 1.12 + 184700) / 162);
-            const weekdayNormalRate = Math.floor(baseHourlyRate * 1.25);
-            const weekdayNightRate = Math.floor(baseHourlyRate * 1.5);
-            const holidayNormalRate = Math.floor(baseHourlyRate * 1.35);
-            const holidayNightRate = Math.floor(baseHourlyRate * 1.6);
+        function updateDependentResult() {
+            const dependents = parseInt(document.getElementById('dependents').value);
+            const resultElement = document.getElementById('dependent-result');
+            resultElement.textContent = `b × 6500 = ¥${(dependents * 6500).toLocaleString()}`;
+        }
 
-            document.getElementById('weekdayNormalRate').textContent = `¥${weekdayNormalRate}`;
-            document.getElementById('weekdayNightRate').textContent = `¥${weekdayNightRate}`;
-            document.getElementById('holidayNormalRate').textContent = `¥${holidayNormalRate}`;
-            document.getElementById('holidayNightRate').textContent = `¥${holidayNightRate}`;
-            document.getElementById('breakRate').textContent = `¥${baseHourlyRate}`;
+        function updateHousingResult() {
+            const housing = parseInt(document.getElementById('housing').value);
+            const resultElement = document.getElementById('housing-result');
+            resultElement.textContent = `c = ¥${housing.toLocaleString()}`;
+        }
 
-            const weekdayNormalPay = weekdayNormalRate * weekdayNormalHours;
-            const weekdayNightPay = weekdayNightRate * weekdayNightHours;
-            const holidayNormalPay = holidayNormalRate * holidayNormalHours;
-            const holidayNightPay = holidayNightRate * holidayNightHours;
-            const breakPay = baseHourlyRate * breakHours;
+        function updateOvertimeResult() {
+            const overtime = parseFloat(document.getElementById('overtime').value);
+            const years = parseInt(document.getElementById('years').value);
+            const salary = getSalaryFromYears(years);
+            const base = Math.ceil(salary * 1.12 + 184700);
+            const overtimePay = Math.ceil(1.25 * overtime * base / 162);
+            const resultElement = document.getElementById('overtime-result');
+            resultElement.textContent = `残業計算: ¥${overtimePay.toLocaleString()}`;
+        }
 
-            const totalPay = weekdayNormalPay + weekdayNightPay + holidayNormalPay + holidayNightPay + breakPay;
+        function updateNightDutyResult() {
+            const nightDuty = parseInt(document.getElementById('night-duty').value);
+            const resultElement = document.getElementById('night-duty-result');
+            resultElement.textContent = `e × 21000 = ¥${(nightDuty * 21000).toLocaleString()}`;
+        }
 
-            resultDiv.innerHTML = `
-                <p>平日普通残業: ¥${weekdayNormalPay.toLocaleString()}</p>
-                <p>平日深夜残業: ¥${weekdayNightPay.toLocaleString()}</p>
-                <p>休日普通残業: ¥${holidayNormalPay.toLocaleString()}</p>
-                <p>休日深夜残業: ¥${holidayNightPay.toLocaleString()}</p>
-                <p>休憩時間給料: ¥${breakPay.toLocaleString()}</p>
-                <p><strong>総支給額: ¥${totalPay.toLocaleString()}</strong></p>
-            `;
+        function calculateSalary() {
+            const years = parseInt(document.getElementById('years').value);
+            const dependents = parseFloat(document.getElementById('dependents').value);
+            const housing = parseFloat(document.getElementById('housing').value);
+            const overtime = parseFloat(document.getElementById('overtime').value);
+            const nightDuty = parseFloat(document.getElementById('night-duty').value);
+            const positionAllowance = parseFloat(document.getElementById('position-allowance').value);
+            const salary = getSalaryFromYears(years);
+
+            const base = Math.ceil((salary + dependents * 6500 + positionAllowance) * 1.12);
+            const overtimePay = Math.ceil(1.25 * overtime * (salary * 1.12 + 184700) / 162);
+            const total = Math.ceil(base + housing + 184700 + overtimePay + (nightDuty * 21000));
+
+            const outputDiv = document.getElementById('output');
+            outputDiv.textContent = `予想月給: ¥${total.toLocaleString()}`;
+            outputDiv.style.display = 'block';
+
+            const ctx = document.getElementById('salaryChart').getContext('2d');
+            document.getElementById('salaryChart').style.display = 'block';
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({ length: 11 }, (_, i) => `${years + i}年目`),
+                    datasets: [{
+                        label: '予想月給',
+                        data: Array.from({ length: 11 }, (_, i) => {
+                            const salaryFuture = getSalaryFromYears(years + i);
+                            const baseFuture = Math.ceil((salaryFuture + dependents * 6500 + positionAllowance) * 1.12);
+                            const overtimeFuture = Math.ceil(1.25 * overtime * (salaryFuture * 1.12 + 184700) / 162);
+                            return Math.ceil(baseFuture + housing + 184700 + overtimeFuture + (nightDuty * 21000));
+                        }),
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '年数'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '月給 (円)'
+                            }
+                        }
+                    }
+                }
+            });
         }
     </script>
 </body>
