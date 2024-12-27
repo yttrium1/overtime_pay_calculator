@@ -188,20 +188,13 @@
             const nightDuty = parseFloat(document.getElementById('night-duty').value);
             const positionAllowance = parseFloat(document.getElementById('position-allowance').value);
 
-            const salaries = [];
-            const labels = [];
-
-            for (let i = 0; i <= 10; i++) {
-                const salary = getSalaryFromYears(years + i);
-                const base = Math.ceil((salary + dependents * 6500) * 1.12 + positionAllowance * 0.12);
-                const overtimePay = Math.ceil(1.25 * overtime * (base + 184700) / 162);
-                const total = Math.ceil(base + housing + 184700 + overtimePay + (nightDuty * 21000));
-                salaries.push(total);
-                labels.push(`${years + i}年目`);
-            }
+            const salary = getSalaryFromYears(years);
+            const base = Math.ceil((salary + dependents * 6500) * 1.12 + positionAllowance * 0.12);
+            const overtimePay = Math.ceil(1.25 * overtime * (base + 184700) / 162);
+            const total = Math.ceil(base + housing + 184700 + overtimePay + (nightDuty * 21000));
 
             const outputDiv = document.getElementById('output');
-            outputDiv.textContent = `予想月給: ¥${salaries[0].toLocaleString()}`;
+            outputDiv.textContent = `予想月給: ¥${total.toLocaleString()}`;
             outputDiv.style.display = 'block';
 
             const ctx = document.getElementById('salaryChart').getContext('2d');
@@ -209,10 +202,15 @@
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: Array.from({length: 11}, (_, i) => `${years + i}年目`),
                     datasets: [{
                         label: '予想月給',
-                        data: salaries,
+                        data: Array.from({length: 11}, (_, i) => {
+                            const yearlySalary = getSalaryFromYears(years + i);
+                            const yearlyBase = Math.ceil((yearlySalary + dependents * 6500) * 1.12 + positionAllowance * 0.12);
+                            const yearlyOvertimePay = Math.ceil(1.25 * overtime * (yearlyBase + 184700) / 162);
+                            return Math.ceil(yearlyBase + housing + 184700 + yearlyOvertimePay + (nightDuty * 21000));
+                        }),
                         borderColor: 'rgba(75, 192, 192, 1)',
                         backgroundColor: 'rgba(75, 192, 192, 0.2)',
                         borderWidth: 2
