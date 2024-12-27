@@ -4,115 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>給与計算システム</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --error-color: #dc2626;
-            --success-color: #059669;
-            --border-color: #e5e7eb;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f3f4f6;
-            margin: 0;
-            padding: 1rem;
-            line-height: 1.5;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: #ffffff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border-radius: 0.5rem;
-        }
-        
-        h1 {
-            text-align: center;
-            color: #111827;
-            margin-bottom: 2rem;
-            font-size: 1.875rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: #374151;
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.375rem;
-            font-size: 1rem;
-            transition: border-color 0.15s ease;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        
-        .error {
-            color: var(--error-color);
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-        
-        button {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.15s ease;
-        }
-        
-        button:hover {
-            background-color: #1d4ed8;
-        }
-        
-        .result {
-            margin-top: 2rem;
-            padding: 1rem;
-            background-color: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 0.375rem;
-            text-align: center;
-        }
-        
-        .result-amount {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--success-color);
-        }
-        
-        .breakdown {
-            margin-top: 1rem;
-            font-size: 0.875rem;
-            color: #4b5563;
-        }
-        
-        .chart-container {
-            margin-top: 2rem;
-            padding: 1rem;
-            background-color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 0.375rem;
-        }
+        body { font-family: sans-serif; background: #f3f4f6; margin: 0; padding: 1rem; }
+        .container { max-width: 800px; margin: 2rem auto; padding: 2rem; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 8px; }
+        h1 { text-align: center; color: #111; margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        input, select { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        button { width: 100%; padding: 0.75rem; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        .error { color: red; font-size: 0.875rem; margin-top: 0.25rem; }
+        .result { margin-top: 2rem; padding: 1rem; border: 1px solid #ddd; border-radius: 4px; }
+        .chart-container { margin-top: 2rem; }
     </style>
 </head>
 <body>
@@ -120,40 +24,40 @@
         <h1>給与計算システム</h1>
         <form id="salaryForm">
             <div class="form-group">
-                <label for="years">勤続年数</label>
+                <label>勤続年数</label>
                 <input type="number" id="years" min="3" max="29" required>
                 <div class="error" id="years-error"></div>
             </div>
             
             <div class="form-group">
-                <label for="dependents">扶養手当対象者数</label>
+                <label>扶養手当対象者数</label>
                 <input type="number" id="dependents" min="0" required>
                 <div class="error" id="dependents-error"></div>
             </div>
             
             <div class="form-group">
-                <label for="housing">住居手当</label>
-                <select id="housing" required>
+                <label>住居手当</label>
+                <select id="housing">
                     <option value="28000">あり (28,000円)</option>
                     <option value="0">なし</option>
                 </select>
             </div>
             
             <div class="form-group">
-                <label for="overtime">月平均残業時間</label>
+                <label>月平均残業時間</label>
                 <input type="number" id="overtime" min="0" step="0.5" required>
                 <div class="error" id="overtime-error"></div>
             </div>
             
             <div class="form-group">
-                <label for="nightDuty">日当直回数</label>
+                <label>日当直回数</label>
                 <input type="number" id="nightDuty" min="0" required>
                 <div class="error" id="nightDuty-error"></div>
             </div>
             
             <div class="form-group">
-                <label for="position">職位</label>
-                <select id="position" required>
+                <label>職位</label>
+                <select id="position">
                     <option value="0">一般職員</option>
                     <option value="80000">副部長</option>
                     <option value="95000">部長</option>
@@ -163,17 +67,13 @@
             <button type="submit">計算する</button>
         </form>
         
-        <div id="result" class="result" style="display: none;">
-            <div class="result-amount"></div>
-            <div class="breakdown"></div>
-        </div>
+        <div id="result" class="result" style="display:none"></div>
         
         <div class="chart-container">
             <canvas id="salaryChart"></canvas>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.7.0/chart.min.js"></script>
     <script>
         const salaryTable = {
             3: 292500, 4: 301200, 5: 312500, 6: 324300, 7: 336100,
@@ -184,61 +84,54 @@
             28: 565300, 29: 571500
         };
 
-        let chart = null;
+        let salaryChart = null;
 
-        function validateInput(value, min, max) {
-            return value !== "" && !isNaN(value) && value >= min && (!max || value <= max);
-        }
-
-        function clearErrors() {
-            document.querySelectorAll('.error').forEach(el => el.textContent = '');
-        }
-
-        function calculateSalary(formData) {
-            const baseSalary = salaryTable[formData.years];
-            const dependentAllowance = formData.dependents * 6500;
-            const positionAllowance = formData.position * 0.12;
+        function calculateSalary(years, dependents, housing, overtime, nightDuty, position) {
+            const baseSalary = salaryTable[years];
+            const dependentAllowance = dependents * 6500;
+            const positionAllowance = position * 0.12;
             
             const baseAmount = Math.ceil((baseSalary + dependentAllowance) * 1.12 + positionAllowance);
-            const overtimePay = Math.ceil(1.25 * formData.overtime * (baseAmount + 184700) / 162);
-            const nightDutyPay = formData.nightDuty * 21000;
+            const overtimePay = Math.ceil(1.25 * overtime * (baseAmount + 184700) / 162);
+            const nightDutyPay = nightDuty * 21000;
             
             return {
-                total: Math.ceil(baseAmount + formData.housing + 184700 + overtimePay + nightDutyPay),
+                total: Math.ceil(baseAmount + housing + 184700 + overtimePay + nightDutyPay),
                 breakdown: {
                     baseSalary,
                     dependentAllowance,
                     positionAllowance,
                     overtimePay,
-                    nightDutyPay,
-                    fixedAllowance: 184700
+                    nightDutyPay
                 }
             };
         }
 
-        function updateChart(formData) {
-            const years = Array.from({length: 11}, (_, i) => formData.years + i);
-            const salaries = years.map(year => {
-                if (year <= 29) {
-                    const yearData = {...formData, years: year};
-                    return calculateSalary(yearData).total;
-                }
-                return null;
-            }).filter(salary => salary !== null);
-
+        function updateChart(years, dependents, housing, overtime, nightDuty, position) {
             const ctx = document.getElementById('salaryChart').getContext('2d');
             
-            if (chart) {
-                chart.destroy();
+            if (salaryChart) {
+                salaryChart.destroy();
             }
 
-            chart = new Chart(ctx, {
+            const labels = [];
+            const data = [];
+            
+            for (let i = 0; i < 11; i++) {
+                const year = years + i;
+                if (year <= 29) {
+                    labels.push(`${year}年目`);
+                    data.push(calculateSalary(year, dependents, housing, overtime, nightDuty, position).total);
+                }
+            }
+
+            salaryChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: years.slice(0, salaries.length).map(year => `${year}年目`),
+                    labels: labels,
                     datasets: [{
                         label: '予想月給',
-                        data: salaries,
+                        data: data,
                         borderColor: '#2563eb',
                         backgroundColor: 'rgba(37, 99, 235, 0.1)',
                         tension: 0.4
@@ -246,12 +139,6 @@
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: '今後10年間の給与推移'
-                        }
-                    },
                     scales: {
                         y: {
                             beginAtZero: false,
@@ -267,57 +154,33 @@
 
         document.getElementById('salaryForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            clearErrors();
             
-            const formData = {
-                years: parseInt(document.getElementById('years').value),
-                dependents: parseInt(document.getElementById('dependents').value),
-                housing: parseInt(document.getElementById('housing').value),
-                overtime: parseFloat(document.getElementById('overtime').value),
-                nightDuty: parseInt(document.getElementById('nightDuty').value),
-                position: parseInt(document.getElementById('position').value)
-            };
+            const years = parseInt(document.getElementById('years').value);
+            const dependents = parseInt(document.getElementById('dependents').value);
+            const housing = parseInt(document.getElementById('housing').value);
+            const overtime = parseFloat(document.getElementById('overtime').value);
+            const nightDuty = parseInt(document.getElementById('nightDuty').value);
+            const position = parseInt(document.getElementById('position').value);
 
-            let isValid = true;
-
-            if (!validateInput(formData.years, 3, 29)) {
-                document.getElementById('years-error').textContent = '3年目から29年目までの値を入力してください';
-                isValid = false;
-            }
-
-            if (!validateInput(formData.dependents, 0)) {
-                document.getElementById('dependents-error').textContent = '0以上の値を入力してください';
-                isValid = false;
-            }
-
-            if (!validateInput(formData.overtime, 0)) {
-                document.getElementById('overtime-error').textContent = '0以上の値を入力してください';
-                isValid = false;
-            }
-
-            if (!validateInput(formData.nightDuty, 0)) {
-                document.getElementById('nightDuty-error').textContent = '0以上の値を入力してください';
-                isValid = false;
-            }
-
-            if (!isValid) return;
-
-            const result = calculateSalary(formData);
+            const result = calculateSalary(years, dependents, housing, overtime, nightDuty, position);
             
-            const resultElement = document.getElementById('result');
-            resultElement.style.display = 'block';
-            resultElement.querySelector('.result-amount').textContent = 
-                `予想月給: ¥${result.total.toLocaleString()}`;
-            resultElement.querySelector('.breakdown').innerHTML = `
-                基本給: ¥${result.breakdown.baseSalary.toLocaleString()}<br>
-                扶養手当: ¥${result.breakdown.dependentAllowance.toLocaleString()}<br>
-                職務手当: ¥${Math.ceil(result.breakdown.positionAllowance).toLocaleString()}<br>
-                残業手当: ¥${result.breakdown.overtimePay.toLocaleString()}<br>
-                日当直手当: ¥${result.breakdown.nightDutyPay.toLocaleString()}<br>
-                固定手当: ¥${result.breakdown.fixedAllowance.toLocaleString()}
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h3>計算結果</h3>
+                <p>予想月給: ¥${result.total.toLocaleString()}</p>
+                <p>内訳:</p>
+                <ul>
+                    <li>基本給: ¥${result.breakdown.baseSalary.toLocaleString()}</li>
+                    <li>扶養手当: ¥${result.breakdown.dependentAllowance.toLocaleString()}</li>
+                    <li>職務手当: ¥${Math.ceil(result.breakdown.positionAllowance).toLocaleString()}</li>
+                    <li>残業手当: ¥${result.breakdown.overtimePay.toLocaleString()}</li>
+                    <li>日当直手当: ¥${result.breakdown.nightDutyPay.toLocaleString()}</li>
+                    <li>固定手当: ¥184,700</li>
+                </ul>
             `;
 
-            updateChart(formData);
+            updateChart(years, dependents, housing, overtime, nightDuty, position);
         });
     </script>
 </body>
